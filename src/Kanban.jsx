@@ -55,13 +55,13 @@ function Kanban() {
         try {
             await api.post('/tarefas', {
                 titulo: novoTitulo,
-                descricao: "Criada via Kanban Frontend", // Pode adicionar um campo de texto para isto se quiser
+                descricao: "Criada via Kanban Frontend", 
                 projetoId: id,
                 criadorId: usuario.id,
-                responsavelId: responsavelId // Usa o ID selecionado no dropdown
+                responsavelId: responsavelId 
             });
             setNovoTitulo('');
-            carregarDados(); // Recarrega o quadro para mostrar a nova tarefa
+            carregarDados(); 
         } catch (error) {
             console.error(error);
             alert('Erro ao criar tarefa');
@@ -69,7 +69,6 @@ function Kanban() {
     };
 
     const moverTarefa = async (tarefaId, ordemDestino) => {
-        // Encontra a etapa baseada na ordem (1, 2, 3...)
         const etapaDestino = projeto.fluxoTrabalho.etapas.find(e => e.ordem === ordemDestino);
         if (!etapaDestino) return;
 
@@ -79,6 +78,22 @@ function Kanban() {
         } catch (error) {
             console.error(error);
             alert('Erro ao mover tarefa');
+        }
+    };
+
+    // --- NOVA FUNÇÃO DE EXCLUIR ---
+    const handleExcluir = async (tarefaId) => {
+        if (!window.confirm("Tem certeza que deseja excluir esta tarefa?")) return;
+
+        try {
+            // Passamos o idExecutor como parâmetro na URL, conforme o Backend espera
+            await api.delete(`/tarefas/${tarefaId}?idExecutor=${usuario.id}`);
+            carregarDados(); // Atualiza a tela removendo a tarefa excluída
+        } catch (error) {
+            console.error(error);
+            // Mostra mensagem amigável se for erro de permissão (403) ou outro
+            const msg = error.response?.data || 'Erro ao excluir tarefa. Verifique suas permissões.';
+            alert(msg);
         }
     };
 
@@ -144,7 +159,22 @@ function Kanban() {
                                 {getTarefasPorEtapa(etapa.id).map(tarefa => (
                                     <div key={tarefa.id} className="card mb-2 border-0 shadow-sm">
                                         <div className="card-body p-3">
-                                            <h6 className="card-title mb-1">{tarefa.titulo}</h6>
+                                            
+                                            {/* Título e Botão de Excluir lado a lado */}
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <h6 className="card-title mb-1 text-truncate" style={{maxWidth: '85%'}}>
+                                                    {tarefa.titulo}
+                                                </h6>
+                                                <button 
+                                                    className="btn btn-sm text-danger p-0" 
+                                                    style={{lineHeight: '10px', fontSize: '1.2rem', marginTop: '-2px'}}
+                                                    onClick={() => handleExcluir(tarefa.id)}
+                                                    title="Excluir Tarefa"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+
                                             <p className="card-text small text-muted mb-3">
                                                 Resp: {tarefa.responsavel ? tarefa.responsavel.nome : 'Ninguém'}
                                             </p>

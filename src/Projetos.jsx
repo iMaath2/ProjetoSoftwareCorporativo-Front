@@ -11,8 +11,12 @@ function Projetos() {
     const usuario = JSON.parse(localStorage.getItem('usuario'));
 
     useEffect(() => {
-        if (!usuario) navigate('/');
-        carregarProjetos();
+        // Se não houver utilizador salvo, expulsa para o login
+        if (!usuario) {
+            navigate('/');
+        } else {
+            carregarProjetos();
+        }
     }, []);
 
     const carregarProjetos = async () => {
@@ -24,27 +28,29 @@ function Projetos() {
         }
     };
 
+    // --- NOVA FUNÇÃO DE LOGOUT ---
+    const handleLogout = () => {
+        localStorage.removeItem('usuario'); // Limpa os dados do navegador
+        navigate('/'); // Redireciona para o Login
+    };
+
     const criarProjeto = async (e) => {
         e.preventDefault();
         try {
-            // 1. Criar Projeto
+            // 1. Cria Projeto
             const resProj = await api.post('/projetos', {
                 nome: novoProjeto.nome,
                 descricao: novoProjeto.descricao,
                 gerenteId: usuario.id
             });
             
-            // 2. Criar/Obter Fluxo Padrão (Garante que o projeto tenha fluxo)
-            let idFluxo;
+            // 2. Tenta associar Fluxo Padrão
+            let idFluxo = 1;
             try {
                 const resFluxo = await api.post('/fluxos/padrao');
                 idFluxo = resFluxo.data.id;
-            } catch (err) {
-                // Se já existir ou der erro, tenta usar o ID 1 (padrão do sistema)
-                idFluxo = 1; 
-            }
+            } catch (err) { /* Ignora se já existir */ }
 
-            // 3. Associar
             await api.post(`/projetos/${resProj.data.id}/fluxo/${idFluxo}?idExecutor=${usuario.id}`);
 
             alert('Projeto criado!');
@@ -59,10 +65,17 @@ function Projetos() {
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Meus Projetos</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(!showModal)}>
-                    {showModal ? 'Cancelar' : '+ Novo Projeto'}
-                </button>
+                <h2 className="mb-0">Olá, {usuario?.nome}</h2>
+                
+                {/* Área de Botões do Topo */}
+                <div>
+                    <button className="btn btn-primary me-2" onClick={() => setShowModal(!showModal)}>
+                        {showModal ? 'Cancelar' : '+ Novo Projeto'}
+                    </button>
+                    <button className="btn btn-outline-danger" onClick={handleLogout}>
+                        Sair
+                    </button>
+                </div>
             </div>
 
             {showModal && (
@@ -85,6 +98,7 @@ function Projetos() {
                 </div>
             )}
 
+            <h4 className="text-muted mb-3">Meus Projetos</h4>
             <div className="row">
                 {projetos.map(projeto => (
                     <div key={projeto.id} className="col-md-4 mb-3">
@@ -99,6 +113,11 @@ function Projetos() {
                         </div>
                     </div>
                 ))}
+                {projetos.length === 0 && (
+                    <div className="col-12 text-center text-muted mt-5">
+                        <p>Nenhum projeto encontrado. Crie o primeiro acima!</p>
+                    </div>
+                )}
             </div>
         </div>
     );
