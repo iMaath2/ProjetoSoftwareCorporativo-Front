@@ -38,6 +38,9 @@ function Login() {
                                            value={senha} onChange={e => setSenha(e.target.value)} />
                                 </div>
                                 <button type="submit" className="btn btn-primary w-100">Entrar</button>
+                                    <div className="mt-3 text-center">
+                                    <small>Não tem conta? <a href="/cadastro">Cadastre-se aqui</a></small>
+                                    </div>
                             </form>
                         </div>
                     </div>
